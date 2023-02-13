@@ -2,12 +2,12 @@
 
 from neo4j import GraphDatabase
 
-# docker run -p7474:7474 -p7687:7687 -e NEO4J_AUTH=neo4j/s3cr3t neo4j
+# docker run -p7474:7474 -p7687:7687 -e NEO4J_AUTH=neo4j/secret123 neo4j
 
 HOSTNAME = "localhost"
 PORT     = 7687
 USERNAME = "neo4j"
-PASSWORD = "s3cr3t"
+PASSWORD = "secret123"
 
 ###############################################################################
 ################################################################## Helpers ####
@@ -34,6 +34,42 @@ with driver.session() as session:
 
 ###############################################################################
 ##################################################################### Data ####
+
+q0 = \
+'''
+CREATE (homer:Person {name: 'Homer', sex: "male"}),
+        (marge:Person {name: 'Marge', sex: "female"}),
+        (bart:Person {name: 'Bart', sex: "male"}),
+        (lisa:Person {name: 'Lisa', sex: "female"}),
+        (maggie:Person {name: 'Maggie', sex: "female"})
+'''
+with driver.session() as session:
+  data = session.run(q0)
+
+q0 = \
+'''
+MATCH (homer:Person),
+      (marge:Person),
+      (bart:Person),
+      (lisa:Person),
+      (maggie:Person)
+WHERE homer.name = 'Homer' 
+      AND marge.name = 'Marge' 
+      AND bart.name = 'Bart' 
+      AND lisa.name = 'Lisa' 
+      AND maggie.name = 'Maggie'
+CREATE (homer)-[:olderThan]->(marge),
+        (bart)-[:olderThan]->(lisa),
+        (lisa)-[:olderThan]->(maggie),
+        (homer)-[:parentOf]->(bart),
+        (homer)-[:parentOf]->(lisa),
+        (homer)-[:parentOf]->(maggie),
+        (marge)-[:parentOf]->(bart),
+        (marge)-[:parentOf]->(lisa),
+        (marge)-[:parentOf]->(maggie)
+'''
+with driver.session() as session:
+  data = session.run(q0)
 
 ###############################################################################
 ################################################################## queries ####
@@ -120,4 +156,3 @@ print('')
 ################################################################# finalize ####
 
 driver.close()
-
