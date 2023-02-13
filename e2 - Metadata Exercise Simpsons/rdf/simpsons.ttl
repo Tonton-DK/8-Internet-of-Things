@@ -1,0 +1,60 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix p: <http://ses.sdk.dk/junk/people#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+p:Homer a p:Male ;
+    p:hasName "Homer" ;
+    p:olderThan p:Marge ;
+    p:parentOf p:Bart,
+        p:Lisa,
+        p:Maggie .
+
+p:olderThan a owl:ObjectProperty ;
+    rdfs:domain p:Person ;
+    rdfs:range p:Person .
+
+p:parentOf a owl:ObjectProperty ;
+    rdfs:domain p:Person ;
+    rdfs:range p:Person .
+
+p:Marge a p:Female ;
+    p:hasName "Marge" ;
+    p:parentOf p:Bart,
+        p:Lisa,
+        p:Maggie .
+
+p:_Person_cardmax a owl:Restriction ;
+    owl:maxCardinality 1 ;
+    owl:onProperty p:hasName .
+
+p:_Person_cardmin a owl:Restriction ;
+    owl:minCardinality 1 ;
+    owl:onProperty p:hasName .
+
+p:Bart a p:Male ;
+    p:hasName "Bart" ;
+    p:olderThan p:Lisa .
+
+p:Male rdf:label "Male" ;
+    rdfs:subClassOf p:Person .
+
+p:hasName a owl:DatatypeProperty ;
+    rdfs:domain p:Person ;
+    rdfs:range xsd:string .
+
+p:Female rdf:label "Female" ;
+    rdfs:subClassOf p:Person .
+
+p:Lisa a p:Female ;
+    p:hasName "Lisa" ;
+    p:olderThan p:Maggie .
+
+p:Maggie a p:Female ;
+    p:hasName "Maggie" .
+
+p:Person rdfs:subClassOf owl:Class ;
+    owl:equivalentClass p:_Person_cardmax,
+        p:_Person_cardmin .
+
