@@ -1,0 +1,13 @@
+# Target labels
+ bootloader
+# Source files and their labels
+D:/Git/8-Internet-of-Things/e4 - ESP Intro/hello_world/build/CMakeFiles/bootloader
+D:/Git/8-Internet-of-Things/e4 - ESP Intro/hello_world/build/CMakeFiles/bootloader.rule
+D:/Git/8-Internet-of-Things/e4 - ESP Intro/hello_world/build/CMakeFiles/bootloader-complete.rule
+D:/Git/8-Internet-of-Things/e4 - ESP Intro/hello_world/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule
+D:/Git/8-Internet-of-Things/e4 - ESP Intro/hello_world/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule
+D:/Git/8-Internet-of-Things/e4 - ESP Intro/hello_world/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule
+D:/Git/8-Internet-of-Things/e4 - ESP Intro/hello_world/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule
+D:/Git/8-Internet-of-Things/e4 - ESP Intro/hello_world/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule
+D:/Git/8-Internet-of-Things/e4 - ESP Intro/hello_world/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule
+D:/Git/8-Internet-of-Things/e4 - ESP Intro/hello_world/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule
