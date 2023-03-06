@@ -1,0 +1,285 @@
+# Basics
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.8.1"}
+])
+```
+
+## Types and Operations
+
+Atoms are essentially convenient enums. They speed up code, but are never garbage collected. Their name always starts with a colon.
+
+```elixir
+var = :var
+```
+
+Numerical Types:
+
+1. Integers - division may result in a float
+2. Floats
+
+```elixir
+some_int = 42 + 65
+some_float = 3.14
+some_result = 42 / 56
+{some_int, some_float, some_result}
+```
+
+[Tuples](https://hexdocs.pm/elixir/main/Tuple.html):
+
+```elixir
+color = {255, 127, 127}
+```
+
+[Lists](https://hexdocs.pm/elixir/main/List.html) and [Keyword](https://hexdocs.pm/elixir/main/Keyword.html) lists (which are lists):
+
+```elixir
+prime_numbers = [1, 2, 3, 5] ++ [7, 11]
+keyword_list1 = [{:a, 1}, {:b, 2}]
+keyword_list2 = [a: 1, b: 2]
+
+{prime_numbers, keyword_list1, keyword_list2}
+```
+
+[Maps](https://hexdocs.pm/elixir/main/Map.html) allows any term as key:
+
+```elixir
+months = %{:jan => 1, :feb => 2, :mar => 3}
+mar = months[:mar]
+more_months = Map.put(months, :apr, 5)
+more_months_corrected = %{more_months | :apr => 4}
+apr = Map.get(more_months_corrected, :apr)
+
+{months, mar, more_months, more_months_corrected, apr}
+```
+
+[Strings](https://hexdocs.pm/elixir/main/String.html):
+
+```elixir
+concatenated = "Once upon a " <> "time"
+words = String.split(concatenated, " ")
+answer = 42
+conclusion = "the answer is #{answer}"
+
+{concatenated, words, conclusion}
+```
+
+## Variable Binding and Pattern Matching
+
+Variables are *bound* rather than assigned. Such bounding is done though pattern matching using the `=` (match) operator. The `_` keyword matches anything, and any variable that is declared but not used will generate a warning (unless it starts with an underscore).
+
+**Note:** Pattern matching can be nested.
+
+```elixir
+[head | tail] = words
+42 = answer
+{pi, e} = {3.14, 2.7}
+{_, e2} = {3.14, 2.7}
+%{mar: mari, jan: jani} = more_months_corrected
+
+{head, tail, pi, e, e2, mari, jani}
+```
+
+## Functions
+
+Lets implement a function for calculating distance in two dimension, that is:
+
+$
+dist(dx, dy) = \sqrt{dx^2 + dy^2}
+$
+
+In this particular implementation we are using `:math.sqrt` which is a square root implementation from Erlang. Module names starting with a colon are from Erlang.
+
+```elixir
+dist = fn dx, dy -> :math.sqrt(dx * dx + dy * dy) end
+```
+
+Anonymous functions are called using the `.` operator.
+
+```elixir
+dist.(3, 4)
+```
+
+There can be multiple statements in the function body (the last of which determines what is being returned).
+
+```elixir
+dist_long = fn p1x, p1y, p2x, p2y ->
+  dx = p1x - p2x
+  dy = p1y - p2y
+  dist.(dx, dy)
+end
+
+dist_long.(1, 1, -2, 5)
+```
+
+Functions can be grouped into modules:
+
+```elixir
+defmodule Point do
+  def dist(p1, p2) do
+    %{x: x1, y: y1} = p1
+    %{x: x2, y: y2} = p2
+    dx = x2 - x1
+    dy = y2 - y1
+    :math.sqrt(dx * dx + dy * dy)
+  end
+
+  def to_string(p) do
+    %{x: x, y: y} = p
+    "point(#{x}, #{y})"
+  end
+end
+```
+
+```elixir
+p1 = %{x: 1, y: 1}
+p2 = %{x: -2, y: 5}
+
+IO.puts(Point.to_string(p1))
+
+Point.dist(p1, p2)
+```
+
+Function calls are dispatched dyamically based on pattern matching. Guards are allowed (like `when n<0` in the example below) to limit what can be matched.
+
+```elixir
+defmodule Fibonacci do
+  def fib(0) do
+    0
+  end
+
+  def fib(1) do
+    1
+  end
+
+  def fib(n) when n < 0 do
+    raise "only defined for positive integers"
+  end
+
+  def fib(n) do
+    fib(n - 1) + fib(n - 2)
+  end
+end
+
+for i <- 1..10 do
+  Fibonacci.fib(i)
+end
+
+# Fibonacci.fib(2)
+```
+
+```elixir
+Fibonacci.fib(-1)
+```
+
+## Pipe Operator
+
+```elixir
+days = %{"mon" => 0, "tue" => 1, "wed" => 2, "thu" => 3, "fri" => 4, "sat" => 5, "sun" => 6}
+data = "evening Monday\nmorning Friday\nlunch tUesday\nmorning thusday\n\n\n"
+```
+
+The `dbg()` function is integrated into livebook and provide you with a graphical interface to experiment with the individual steps.
+
+```elixir
+mentioned_days =
+  data
+  |> String.trim_trailing("\n")
+  |> String.downcase()
+  |> String.split("\n")
+  |> Enum.map(fn entry ->
+    entry
+    |> String.split(" ")
+    |> Enum.at(1)
+    |> String.slice(0, 3)
+    |> (fn abbrev -> Map.get(days, abbrev) end).()
+  end)
+  |> dbg()
+```
+
+## Named Types
+
+```elixir
+defmodule Person do
+  defstruct name: "Donald Knuth", age: 85
+
+  def construct() do
+    %Person{}
+  end
+
+  def construct(name, age) do
+    %Person{name: name, age: age}
+  end
+end
+
+{Person.construct(), Person.construct("Don Knuth", -1)}
+```
+
+## Servers
+
+You have two main ways of communicating with a [GenServer](https://hexdocs.pm/elixir/main/GenServer.html):
+
+1. **call** is for synchronous communication where you want to wait for a response.
+2. **cast** is for asynchronous communication where you don't want a response.
+
+The GenServer has two sides: An *interface side* whose function are executed by the caller, and a *callback side* whose function are executed by the callee. Typically, each interface function has a corresponding callback function.
+
+```elixir
+defmodule State do
+  use GenServer
+
+  # interface
+
+  def start_link(initial_value) do
+    GenServer.start_link(__MODULE__, initial_value)
+  end
+
+  def set(pid, value) do
+    GenServer.cast(pid, {:set, value})
+  end
+
+  def get(pid) do
+    GenServer.call(pid, {:get})
+  end
+
+  # callbacks
+
+  @impl true
+  def init(initial_value) do
+    {:ok, initial_value}
+  end
+
+  @impl true
+  def handle_cast({:set, value}, _state) do
+    {:noreply, value}
+  end
+
+  @impl true
+  def handle_call({:get}, _from, state) do
+    {:reply, state, state}
+  end
+end
+```
+
+```elixir
+{:ok, pid} = State.start_link(42)
+```
+
+```elixir
+State.get(pid)
+```
+
+```elixir
+State.set(pid, 56)
+```
+
+```elixir
+State.get(pid)
+```
+
+We can trace a call (and the subcalls that go into answering it), and plot them:
+
+```elixir
+Kino.Process.render_seq_trace(fn -> State.get(pid) end)
+```

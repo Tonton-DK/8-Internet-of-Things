@@ -1,0 +1,79 @@
+# Functions
+
+```elixir
+Mix.install([
+  {:vega_lite, "~> 0.1.5"},
+  {:kino_vega_lite, "~> 0.1.7"},
+  {:kino, "~> 0.8.0"}
+])
+```
+
+## Imports
+
+```elixir
+import :math
+alias VegaLite, as: Vl
+```
+
+## Producing Data
+
+Lets look at a function:
+
+$
+f(x) = sin(2x) \cdot cos(x)
+$
+
+We can bind the `f` variable to an anonymous function that implements this by:
+
+```elixir
+f = fn x -> :math.sin(x * 2) * :math.cos(x) end
+```
+
+Lets test it by using the `.` operator to call the function:
+
+```elixir
+f.(12)
+```
+
+Using a [comprehension](https://elixir-lang.org/getting-started/comprehensions.html) we can produce a timeseries:
+
+```elixir
+values =
+  for x <- 1..10000,
+      do:
+        (x / 100)
+        |> (fn x -> %{x: x, y: f.(x)} end).()
+```
+
+## Presenting Data
+
+Lets try to plot it:
+
+```elixir
+Vl.new(width: 400, height: 100)
+|> Vl.data_from_values(values)
+|> Vl.mark(:area)
+|> Vl.encode_field(:x, "x", type: :quantitative, title: "x")
+|> Vl.encode_field(:y, "y", type: :quantitative, title: "sin(2x)*cos(x)")
+```
+
+Alternatively, lets try to produce the data on demand and update the view periodically:
+
+```elixir
+interval = 100
+
+kino =
+  Vl.new(width: 400, height: 400)
+  |> Vl.mark(:line)
+  |> Vl.encode_field(:x, "x", type: :quantitative)
+  |> Vl.encode_field(:y, "y", type: :quantitative)
+  |> Kino.VegaLite.new()
+  |> Kino.render()
+
+fun = fn x ->
+  Kino.VegaLite.push(kino, %{x: x, y: f.(x)}, window: 100)
+  {:cont, x + 0.1}
+end
+
+Kino.VegaLite.periodically(kino, interval, 0, fun)
+```
