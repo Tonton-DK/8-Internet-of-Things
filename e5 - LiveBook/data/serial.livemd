@@ -260,4 +260,9 @@ fun = fn x ->
 end
 
 Kino.VegaLite.periodically(kino, interval, 0, fun)
+
+# {:ok, file} = File.open("files/my_log.txt", [:append])
+# entries = Receiver.fetch(device)
+# IO.puts(file, "hello")
+# File.close(file)
 ```

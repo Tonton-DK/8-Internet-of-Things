@@ -52,6 +52,7 @@ Lets try to plot it:
 ```elixir
 Vl.new(width: 400, height: 100)
 |> Vl.data_from_values(values)
+# :line
 |> Vl.mark(:area)
 |> Vl.encode_field(:x, "x", type: :quantitative, title: "x")
 |> Vl.encode_field(:y, "y", type: :quantitative, title: "sin(2x)*cos(x)")
