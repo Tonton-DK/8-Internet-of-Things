@@ -1,0 +1,1 @@
+docker run -p 8080:8080 -p 8081:8081 --device=/dev/ttyUSB0 --pull always -u (Get-Process -Id $pid).SessionId -v ${PWD}:/data livebook/livebook
