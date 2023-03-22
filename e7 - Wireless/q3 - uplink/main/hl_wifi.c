@@ -12,6 +12,9 @@
 #include "lwip/sys.h"
 
 #include "hl_wifi.h"
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
 
 /* The examples use WiFi configuration that you can set via project configuration menu
 
@@ -164,4 +167,30 @@ void hl_wifi_init(connect_callback_t callback)
 
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
     wifi_init_sta(callback);
+}
+
+sockaddr_in_t hl_wifi_make_addr(char* ip, uint16_t host)
+{
+    sockaddr_in_t addr;
+    addr.sin_addr.s_addr = inet_addr(ip);
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(host);
+    return addr;
+}
+
+int hl_wifi_tcp_connect(sockaddr_in_t addr)
+{
+    int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
+    if (sock < 0){
+        printf("Socket error: %d\n", sock);
+        return -1;
+    }
+
+    int err = connect(sock, (const struct sockaddr *)&addr, sizeof(struct sockaddr_in6));
+    if (err != 0){
+        printf("Connect error: %d\n", err);
+        return -1;
+    }
+
+    return sock;
 }
