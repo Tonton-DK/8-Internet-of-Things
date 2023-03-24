@@ -6,7 +6,7 @@ import socket
 from datetime import datetime
 
 INTERFACE = '0.0.0.0'
-PORT = 8008
+PORT = 8000
 
 def meta   (text): return '\033[1;34m'+text+'\033[1;m'
 def escape (text): return '\033[1;31m'+text+'\033[1;m'
