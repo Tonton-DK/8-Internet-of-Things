@@ -1,0 +1,1 @@
+docker run -p 8080:8080 -p 8081:8081 -p 1883:1883 -p 8000:8000 -p 8883:8883 -p 8884:8884 --pull always -u (Get-Process -Id $pid).SessionId -v ${PWD}:/data livebook/livebook

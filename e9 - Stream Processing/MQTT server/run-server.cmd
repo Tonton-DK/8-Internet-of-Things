@@ -1,0 +1,1 @@
+mosquitto -v -c mqtt-server.conf
