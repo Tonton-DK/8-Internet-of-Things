@@ -1,0 +1,199 @@
+# MQTT Absolute Humidity
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.8.0"},
+  {:tortoise, "~> 0.9"},
+  {:jason, "~> 1.2"},
+  {:math, "~> 0.7.0"}
+])
+```
+
+## Configuration
+
+Which broker and prefix to work on:
+
+```elixir
+kino_broker = Kino.Input.text("MQTT Broker:", default: "broker.hivemq.com")
+kino_prefix = Kino.Input.text("MQTT Prefix:", default: "dk/sdu/iot/2023/myname")
+Kino.Layout.grid([kino_broker, kino_prefix])
+```
+
+```elixir
+{broker, prefix} = {
+  Kino.Input.read(kino_broker),
+  Kino.Input.read(kino_prefix)
+}
+```
+
+## Absolute Humidity Node
+
+First we start an MQTT client:
+
+```elixir
+t = :os.system_time(:milli_seconds)
+client_id = "sdu_iot_mqtt_livebook_ahum_#{t}"
+
+Tortoise.Supervisor.start_child(
+  client_id: client_id,
+  handler: {Tortoise.Handler.Default, []},
+  server: {Tortoise.Transport.Tcp, host: broker, port: 1883},
+  subscriptions: []
+)
+```
+
+Then, we define the node:
+
+```elixir
+defmodule AbsoluteHumidity do
+  use GenServer
+
+  # interface
+
+  def start_link({id, client_id, topic}) do
+    otopic =
+      topic
+      |> Enum.slice(0..-2)
+      |> Enum.join("/")
+      |> String.replace("siggen", "ahum")
+      |> (fn prefix -> prefix <> "/ahum" end).()
+
+    state = [client: client_id, topic: otopic, temp: nil, rhum: nil]
+    GenServer.start(__MODULE__, state, name: via_tuple(id))
+  end
+
+  def consume(pid, {_time, _value} = sample) when is_pid(pid) do
+    GenServer.cast(pid, {:consume, sample})
+  end
+
+  def consume(client_id, topic, {_time, _value} = sample) do
+    id = Enum.slice(topic, 0..-2)
+
+    pid =
+      case Registry.lookup(:ahum_registry, {__MODULE__, id}) do
+        [] ->
+          options = {id, client_id, topic}
+          {:ok, pid} = AbsoluteHumidity.start_link(options)
+          pid
+
+        [{pid, _}] ->
+          pid
+      end
+
+    GenServer.cast(pid, {:consume, topic, sample})
+  end
+
+  # callbacks
+
+  @impl true
+  def init(state) do
+    {:ok, state}
+  end
+
+  @impl true
+  def handle_cast({:consume, itopic, {time, value} = _sample}, state) do
+    [client: client_id, topic: otopic, temp: temp, rhum: rhum] = state
+
+    # update state
+    {temp, rhum} =
+      case List.last(itopic) do
+        "temp" ->
+          {value, rhum}
+
+        "rhum" ->
+          {temp, value}
+
+        t ->
+          IO.puts("Warning: Don't know what do to with last topic '#{t}'. Skipping ...")
+          {temp, rhum}
+      end
+
+    # push out new ahum
+    if temp != nil and rhum != nil do
+      ahum = calc_abs_hum(temp, rhum)
+      message = '{"time": #{time}, "value": #{ahum}}'
+      :ok = Tortoise.publish(client_id, otopic, message, qos: 0)
+    end
+
+    state = [client: client_id, topic: otopic, temp: temp, rhum: rhum]
+    {:noreply, state}
+  end
+
+  # helpers
+
+  defp via_tuple(topic) do
+    {:via, Registry, {:ahum_registry, {__MODULE__, topic}}}
+  end
+
+  # unit: g/m³
+  defp calc_abs_hum(temp, rhum) do
+    6.112 * Math.pow(Math.e(), 17.67 * temp / (temp + 243.5)) * rhum * 2.1674 / (273.15 + temp)
+    #    temp * rhum
+  end
+end
+```
+
+## Dispatcher Node
+
+```elixir
+defmodule Dispatcher do
+  use Tortoise.Handler
+
+  def start_link(args) do
+    GenServer.start(__MODULE__, args)
+  end
+
+  # callback functions
+
+  @impl true
+  def init(client: client_id) do
+    {:ok, [client: client_id]}
+  end
+
+  def handle_message(topic, payload, [client: client_id] = state) do
+    case payload |> Jason.decode() do
+      {:ok, %{"time" => time, "value" => value}} ->
+        AbsoluteHumidity.consume(client_id, topic, {time, value})
+
+      _ ->
+        nil
+    end
+
+    {:ok, state}
+  end
+
+  def child_spec(opts) do
+    %{
+      id: __MODULE__,
+      start: {__MODULE__, :start_link, [opts]},
+      type: :worker,
+      restart: :permanent,
+      shutdown: 500
+    }
+  end
+end
+```
+
+Start registry (should be supervised, but we'll skip that for brevity):
+
+```elixir
+{:ok, registry_pid} = Registry.start_link(name: :ahum_registry, keys: :unique)
+```
+
+Setting up the subscription:
+
+```elixir
+client_id = "sdu_iot_mqtt_livebook_ahum#{:os.system_time(:milli_seconds)}"
+topic_pattern = prefix <> "/siggen/+/+"
+
+{:ok, pid} =
+  Tortoise.Connection.start_link(
+    client_id: client_id,
+    server: {Tortoise.Transport.Tcp, host: broker, port: 1883},
+    handler: {
+      Dispatcher,
+      [client: client_id]
+    },
+    subscriptions: [{topic_pattern, 2}]
+  )
+```
