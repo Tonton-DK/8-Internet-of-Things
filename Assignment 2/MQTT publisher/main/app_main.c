@@ -79,10 +79,12 @@ void toCSV(paramStruct *params)
     printf("The CSV string is: %s\n", params->csv_str);
 }
 
-void post(paramStruct *params)
+void post(paramStruct *params, uint32_t value)
 {
-    int msg_id = esp_mqtt_client_publish(params->client, "topic/temperature", params->csv_str, 0, 1, 0);
-    ESP_LOGI(TAG, "sent publish successful: msg_id=%d, msg=%s", msg_id, params->csv_str);
+    char buffer[16];
+	sprintf(buffer, "%ld\n", value);
+    int msg_id = esp_mqtt_client_publish(params->client, "topic/temperature", buffer, 0, 1, 0);
+    ESP_LOGI(TAG, "sent publish successful: msg_id=%d, msg=%s", msg_id, buffer);
 }
 
 void reset(paramStruct *params)
@@ -97,38 +99,30 @@ static esp_adc_cal_characteristics_t adc1_chars;
 void CollectTemps(void *pvParameters){
 	
 	paramStruct *params = (paramStruct*) pvParameters; 
-	//adc1_config_width(ADC_WIDTH_BIT_12);
-	//adc1_config_channel_atten(ADC1_CHANNEL_5, ADC_ATTEN_DB_11);
 	
-    uint32_t voltage;
     esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_DEFAULT, 0, &adc1_chars);
     ESP_ERROR_CHECK(adc1_config_width(ADC_WIDTH_BIT_DEFAULT));
     ESP_ERROR_CHECK(adc1_config_channel_atten(ADC1_CHANNEL_5, ADC_ATTEN_DB_11));
-
+    
 	reset(params);
 	while (run)
 	{
-        voltage = esp_adc_cal_raw_to_voltage(adc1_get_raw(ADC1_CHANNEL_5), &adc1_chars);
-        printf("ADC1_CHANNEL_5: %ld mV", voltage);
+        uint32_t sam = adc1_get_raw(ADC1_CHANNEL_5);
+        printf("Raw: %ld \n", sam);
+        uint32_t voltage = esp_adc_cal_raw_to_voltage(sam, &adc1_chars);
+        printf("Voltage: %ld mV \n", voltage);
         uint32_t temp = (voltage - LMT86_OFFSET) / LMT86_GAIN;
-        printf("Temp: %ld mV", temp);
+        printf("Temperature: %ld C \n\n", temp);
 
-		// Read ADC value
-		uint32_t input = sample(ADC1_CHANNEL_5);
-		printf("Sample: %ld \n", input);
+		post(params, temp);
 		
-		// Convert ADC value
-		float temperature = convert(input);
-		printf("Temperature: %.2f C\n", temperature);
-		insert(temperature, params);
-		
+        //insert(temp, params);
 		// Send CSV data
-		if (params->current >= params->batch_size) 
-		{ 
-			toCSV(params); 
-			post(params); 
-			reset(params); 
-		}
+		//if (params->current >= params->batch_size) 
+		//{ 
+		//	toCSV(params);
+		//	reset(params);
+		//}
 		
 		vTaskDelay(pdMS_TO_TICKS(params->sample_rate));
 	}
