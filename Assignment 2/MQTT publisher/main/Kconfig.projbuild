@@ -2,7 +2,7 @@ menu "Configuration"
 
     config ADC_CHANNEL
         string "ADC Channel"
-        default "ADC1_CHANNEL_5"
+        default "ADC_CHANNEL_5"
         help
             The pin (on the ESP32) connected to the sensor output.
 
