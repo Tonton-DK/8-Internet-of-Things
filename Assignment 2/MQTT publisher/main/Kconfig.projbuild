@@ -1,0 +1,45 @@
+menu "Configuration"
+
+    config ADC_CHANNEL
+        string "ADC Channel"
+        default "ADC1_CHANNEL_5"
+        help
+            The pin (on the ESP32) connected to the sensor output.
+
+    config ADC_UNIT
+        string "ADC Unit"
+        default "ADC_UNIT_1"
+        help
+            Which ADC to use.
+
+    config FREQUENCY
+        string "Frequency"
+        default "1.0"
+        help
+            The exact frequency at which you should publish.
+
+    config WIFI_SSID
+        string "WIFI SSID"
+        default "SkyNet"
+        help
+            The SSID to connect to.
+
+    config WIFI_PASSWORD
+        string "WIFI Password"
+        default "Summer"
+        help
+            The password to be used for connecting to the WiFi network.
+
+    config MQTT_BROKER
+        string "MQTT Broker"
+        default "mqtt://broker.hivemq.com"
+        help
+            The MQTT broker to connect to (without auth).
+
+    config MQTT_TOPIC
+        string "MQTT Topic"
+        default "org/sdu/2023/iot/my/name"
+        help
+            The topic on the MQTT broker to publish to.
+
+endmenu

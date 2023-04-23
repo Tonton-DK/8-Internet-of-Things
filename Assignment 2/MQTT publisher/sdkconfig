@@ -307,6 +307,18 @@ CONFIG_PARTITION_TABLE_MD5=y
 # end of Partition Table
 
 #
+# Configuration
+#
+CONFIG_ADC_CHANNEL="ADC1_CHANNEL_5"
+CONFIG_ADC_UNIT="ADC_UNIT_1"
+CONFIG_FREQUENCY="1.0"
+CONFIG_WIFI_SSID="SkyNet"
+CONFIG_WIFI_PASSWORD="Summer"
+CONFIG_MQTT_BROKER="mqtt://broker.hivemq.com"
+CONFIG_MQTT_TOPIC="org/sdu/2023/iot/my/name"
+# end of Configuration
+
+#
 # Example Connection Configuration
 #
 CONFIG_ENV_GPIO_RANGE_MIN=0
