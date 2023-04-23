@@ -13,8 +13,8 @@ menu "Configuration"
             Which ADC to use.
 
     config FREQUENCY
-        string "Frequency"
-        default "1.0"
+        int "Frequency"
+        default 1.0
         help
             The exact frequency at which you should publish.
 
