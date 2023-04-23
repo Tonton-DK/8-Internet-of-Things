@@ -18,15 +18,14 @@ static const char *TAG = "MQTT_TEMP_PUBLISHER";
 #define ENDPOINT        "mqtt://192.168.0.152"
 #define DEVICE_ID       "Temp_Sensor"
 
-bool run;
-static esp_adc_cal_characteristics_t adc1_chars;
-
 typedef struct {
   esp_mqtt_client_handle_t client;
   uint32_t sample_rate;
   char topic[32];
 } paramStruct;
 
+bool run;
+static esp_adc_cal_characteristics_t adc1_chars;
 paramStruct params;
 
 uint32_t collectTemp()
