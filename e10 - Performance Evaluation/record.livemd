@@ -1,0 +1,143 @@
+# Recorder
+
+## Recorder Module
+
+```elixir
+defmodule Recorder do
+  use GenServer
+
+  @timeout 237
+
+  # interface
+
+  def add_event(pid, descriptor) do
+    GenServer.cast(pid, {:add_event, descriptor})
+  end
+
+  def start_monitoring(pid) do
+    GenServer.cast(pid, {:start_monitoring, self()})
+  end
+
+  # callbacks
+
+  @impl true
+  def init([filename: filename] = _opts) do
+    {:ok, file} = File.open(filename, [:append])
+    register_timeout()
+    {:ok, [file: file, clients: []]}
+  end
+
+  @impl true
+  def handle_cast({:add_event, descriptor}, state) do
+    file = state[:file]
+    tnow = :os.system_time(:milli_seconds) / 1000
+    IO.binwrite(file, "#{tnow} event #{descriptor}\n")
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_cast({:start_monitoring, client}, [file: file, clients: clients] = _state) do
+    state = [file: file, clients: [client] ++ clients]
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info(:monitor, [file: file, clients: clients] = state) do
+    Enum.map(clients, fn client -> IO.binwrite(file, get_stats(client)) end)
+
+    register_timeout()
+    {:noreply, state}
+  end
+
+  # helpers
+
+  defp register_timeout() do
+    Process.send_after(self(), :monitor, @timeout)
+  end
+
+  defp get_stats(pid) do
+    tnow = :os.system_time(:milli_seconds) / 1000
+    info = Process.info(pid)
+
+    # [
+    #   status: status,
+    #   message_queue_len: queue,
+    #   total_heap_size: heap,
+    #   stack_size: stack,
+    #   reductions: reductions
+    # ] = info
+    status = info[:status]
+    queue = info[:message_queue_len]
+    heap = info[:total_heap_size]
+    stack = info[:stack_size]
+    reductions = info[:reductions]
+
+    "#{tnow} snapshot pid=#{inspect(pid)} status=#{status} queue=#{queue} heap=#{heap} stack=#{stack} reductions=#{reductions}\n"
+  end
+end
+```
+
+## One-Off Test
+
+```elixir
+filename = "recorder_test.log"
+```
+
+Run test:
+
+```elixir
+{:ok, recorder_pid} = GenServer.start_link(Recorder, filename: filename)
+```
+
+```elixir
+Recorder.add_event(recorder_pid, "locationA key-value list")
+```
+
+## Continuous Test
+
+Genserver definition:
+
+```elixir
+defmodule Tester do
+  use GenServer
+
+  @timeout 1000
+  @maxi 100
+
+  # callbacks
+
+  @impl true
+  def init(rec) do
+    register_timeout()
+    Recorder.start_monitoring(rec)
+    {:ok, [i: 0, list: [], rec: rec]}
+  end
+
+  @impl true
+  def handle_info(:emit, i: i, list: list, rec: rec) do
+    Recorder.add_event(rec, "Tester.emit i=#{i}")
+
+    {i, list} =
+      case i do
+        @maxi -> {0, []}
+        _ -> {i + 1, [i] ++ list}
+      end
+
+    register_timeout()
+
+    {:noreply, [i: i, list: list, rec: rec]}
+  end
+
+  # helpers
+
+  defp register_timeout() do
+    Process.send_after(self(), :emit, @timeout)
+  end
+end
+```
+
+Start it:
+
+```elixir
+{:ok, tester_pid} = GenServer.start_link(Tester, recorder_pid)
+```
