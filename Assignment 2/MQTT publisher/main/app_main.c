@@ -4,11 +4,12 @@
 #include "mqtt_client.h"
 #include "driver/adc.h"
 #include "esp_adc_cal.h"
-#include "protocol_examples_common.h"
+#include "hl_wifi.h"
 
 #define CHANNEL CONFIG_ADC_CHANNEL
 #define UNIT CONFIG_ADC_UNIT
-#define FREQUENCY CONFIG_FREQUENCY
+
+#define PERIOD CONFIG_PERIOD
 #define SSID CONFIG_WIFI_SSID
 #define PASSWORD CONFIG_WIFI_PASSWORD
 #define BROKER CONFIG_MQTT_BROKER
@@ -163,7 +164,7 @@ void CollectTemps(void *pvParameters)
     {
         uint32_t temp = collectTemp();
         post(client, temp);
-        vTaskDelay(pdMS_TO_TICKS(FREQUENCY * 1000));
+        vTaskDelay(pdMS_TO_TICKS(PERIOD * 1000));
     }
 
     vTaskDelete(NULL);
@@ -171,7 +172,6 @@ void CollectTemps(void *pvParameters)
 
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
-    ESP_LOGD(TAG, "Event dispatched from event loop base=%s, event_id=%" PRIi32 "", base, event_id);
     esp_mqtt_event_handle_t event = event_data;
     esp_mqtt_client_handle_t client = event->client;
 
@@ -192,13 +192,13 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     }
 }
 
-static void mqtt_app_start(void)
+void mqtt_app_start(void)
 {
     esp_mqtt_client_config_t mqtt_cfg = {
         .broker.address.uri = BROKER,
-        .credentials.client_id = DEVICE_ID,
-        .credentials.set_null_client_id = false};
-
+        //.credentials.client_id = DEVICE_ID,
+        //.credentials.set_null_client_id = false
+    };
     esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
     esp_mqtt_client_start(client);
@@ -206,22 +206,5 @@ static void mqtt_app_start(void)
 
 void app_main(void)
 {
-    ESP_LOGI(TAG, "[APP] Startup..");
-    ESP_LOGI(TAG, "[APP] Free memory: %" PRIu32 " bytes", esp_get_free_heap_size());
-    ESP_LOGI(TAG, "[APP] IDF version: %s", esp_get_idf_version());
-
-    esp_log_level_set("*", ESP_LOG_INFO);
-    esp_log_level_set("mqtt_client", ESP_LOG_VERBOSE);
-    esp_log_level_set("MQTT_EXAMPLE", ESP_LOG_VERBOSE);
-    esp_log_level_set("TRANSPORT_BASE", ESP_LOG_VERBOSE);
-    esp_log_level_set("esp-tls", ESP_LOG_VERBOSE);
-    esp_log_level_set("TRANSPORT", ESP_LOG_VERBOSE);
-    esp_log_level_set("outbox", ESP_LOG_VERBOSE);
-
-    ESP_ERROR_CHECK(nvs_flash_init());
-    ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
-    ESP_ERROR_CHECK(example_connect());
-
-    mqtt_app_start();
+    hl_wifi_init(&mqtt_app_start);
 }
