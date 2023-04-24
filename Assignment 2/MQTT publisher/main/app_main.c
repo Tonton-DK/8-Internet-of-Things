@@ -164,7 +164,7 @@ void CollectTemps(void *pvParameters)
     {
         uint32_t temp = collectTemp();
         post(client, temp);
-        vTaskDelay(pdMS_TO_TICKS(PERIOD * 1000));
+        vTaskDelay(pdMS_TO_TICKS(PERIOD));
     }
 
     vTaskDelete(NULL);

@@ -2,7 +2,7 @@ menu "Dynamic Configuration"
 
     config PERIOD
         int "Period"
-        default 1
+        default 1000
         help
             The exact average period of publications.
 

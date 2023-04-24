@@ -310,8 +310,8 @@ CONFIG_PARTITION_TABLE_MD5=y
 # Dynamic Configuration
 #
 CONFIG_PERIOD=1
-CONFIG_WIFI_SSID="SkyNet"
-CONFIG_WIFI_PASSWORD="Summer"
+CONFIG_WIFI_SSID="The Batcave"
+CONFIG_WIFI_PASSWORD="LetKode123"
 CONFIG_MQTT_BROKER="mqtt://192.168.1.102"
 CONFIG_MQTT_TOPIC="topic/temperature"
 # end of Dynamic Configuration
@@ -319,7 +319,7 @@ CONFIG_MQTT_TOPIC="topic/temperature"
 #
 # Static Configuration
 #
-CONFIG_ADC_CHANNEL="ADC_CHANNEL_5"
+CONFIG_ADC_CHANNEL="ADC_CHANNEL_6"
 CONFIG_ADC_UNIT="ADC_UNIT_1"
 # end of Static Configuration
 
