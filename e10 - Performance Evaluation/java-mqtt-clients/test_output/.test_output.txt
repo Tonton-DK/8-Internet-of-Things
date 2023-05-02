@@ -1,0 +1,5 @@
+# time line
+1682540294.7958598 Exception caught in MqttSignalGenerator 1: Client is not connected (32104)
+1682540294.8128645 Exception caught in MqttSignalGenerator 3: Client is not connected (32104)
+1682540294.8169549 Exception caught in MqttSignalGenerator 2: Client is not connected (32104)
+1682540294.8461928 Exception caught in MqttSignalGenerator 0: Client is not connected (32104)
