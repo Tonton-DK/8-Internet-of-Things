@@ -20,5 +20,5 @@ client.on_message = on_message
 # Start the broker
 client.enable_logger()
 client.connect("localhost", 1883)
-client.subscribe("topic/temperature")
+client.subscribe("#")
 client.loop_forever()
